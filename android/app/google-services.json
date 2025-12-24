@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "790822582778",
+    "project_id": "pushnotibatalosnews",
+    "storage_bucket": "pushnotibatalosnews.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:790822582778:android:7c1b05d6125359abedcc43",
+        "android_client_info": {
+          "package_name": "com.example.batalosnews"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCE8jnEL96-risN0VGQMcoBmEjBKsNlsKI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

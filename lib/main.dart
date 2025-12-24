@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:batalosnews/api/firebase_api.dart';
+import 'package:batalosnews/firebase_options.dart';
 import 'package:batalosnews/services/http_service.dart';
 import 'package:batalosnews/services/notification_services.dart';
 import 'package:flutter/material.dart';
@@ -7,10 +9,13 @@ import 'package:batalosnews/pages/homepage.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 import 'package:batalosnews/models/app_config.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 void main() async { 
   WidgetsFlutterBinding.ensureInitialized();
   NotificationServices().initialize();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await FirebaseApi().initiNotifications();
   await loadConfig();
   registerHTTPService();
   runApp(const MyApp());
