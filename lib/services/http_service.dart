@@ -4,7 +4,6 @@ import 'package:get_it/get_it.dart';
 
 class HTTPService {
   final Dio dio = Dio();
-  final test_path = "";
 
   AppConfig? _appConfig;
   String? _news_base_url;

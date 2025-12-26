@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:batalosnews/api/firebase_api.dart';
 import 'package:batalosnews/firebase_options.dart';
 import 'package:batalosnews/services/http_service.dart';
@@ -10,10 +9,37 @@ import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 import 'package:batalosnews/models/app_config.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:workmanager/workmanager.dart';
+import 'models/news_model.dart';
+
+void callbackDispatcher() {
+  Workmanager().executeTask((taskName, inputData) async {
+    switch (taskName) {
+      case 'simpleTask':
+        // Perform your background processing here
+        NewsModel().showNewArticlesNotification("everything", "", "${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}", "bbc-news");
+        break;
+      // handle more tasks...
+    }
+    return Future.value(true);
+  });
+}
 
 void main() async { 
   WidgetsFlutterBinding.ensureInitialized();
   NotificationServices().initialize();
+  Workmanager().initialize(
+    callbackDispatcher,
+    isInDebugMode: false,
+  );
+  Workmanager().registerPeriodicTask(
+    "1",
+    "simpleTask",
+    frequency: const Duration(minutes: 15),
+    inputData: <String, dynamic>{
+      'key': 'value',
+    },
+  );
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await FirebaseApi().initiNotifications();
   await loadConfig();

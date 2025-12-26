@@ -50,7 +50,7 @@ class DatabaseHelper {
   }
   Future<List<Article>> getSavedArticles() async {
     final db = await instance.database;
-    final savedArticlesJson = await db.query('articles');
+    final savedArticlesJson = await db.rawQuery('SELECT * FROM articles ORDER BY publishedAt DESC');
     return savedArticlesJson.map((articleJson) => Article.fromMap(articleJson)).toList();
   }
   Future<void> deleteArticles() async {

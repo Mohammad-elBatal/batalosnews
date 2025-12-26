@@ -1,12 +1,9 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:batalosnews/classes/Article.dart';
-import 'package:batalosnews/services/notification_services.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:get_it/get_it.dart';
-import 'package:batalosnews/services/http_service.dart';
-import 'package:batalosnews/classes/DatabaseHelper.dart';
+import '../models/news_model.dart';
 import 'dart:async';
 
 
@@ -21,21 +18,20 @@ class Homepage extends StatefulWidget {
 
 class _HomepageState extends State<Homepage> {
   double? _deviceHeight, _deviceWidth;
-  final NotificationServices _notificationService = NotificationServices();
+  final NewsModel _newsModel = NewsModel();
   List<dynamic> articlesJson = [];
   List<Article> articles = [];
   List<Article> savedArticles = [];
-  HTTPService? _http;
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
-  String from = "${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day - 7}";
+  String from = "${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day - 3}";
   String searchQuery = "";
   String source = "bbc-news";
   String path = "everything";
   @override
   void initState() {
     super.initState();
-    _http = GetIt.instance.get<HTTPService>();
-    _dbHelper.database;
+    // _http = GetIt.instance.get<HTTPService>();
+    // _dbHelper.database;
+    loadSavedArticles();
   }
   
   @override
@@ -92,7 +88,7 @@ class _HomepageState extends State<Homepage> {
   }
   Widget _newsList(BuildContext buildContext){
     return FutureBuilder(
-      future: _refreshNews(buildContext)(),
+      future: _newsModel.refreshNews(path, searchQuery, from, source)().then((_) => _newsModel.loadSavedArticles()),
       builder: (context, snapshot) {
         if(snapshot.connectionState == ConnectionState.done){
           if(snapshot.hasData){
@@ -101,8 +97,12 @@ class _HomepageState extends State<Homepage> {
                 setState(() {
                   articles = [];
                 });
-                  await _refreshNews(buildContext)();
-                  await _loadSavedArticles(buildContext);
+                  await _newsModel.refreshNews(path, searchQuery, from, source)();
+                  await _newsModel.loadSavedArticles().then((loadedArticles){
+                    setState(() {
+                      articles = loadedArticles;
+                    });
+                  });
               },
               child: ListView.builder(
                 itemCount: articles.length,
@@ -182,58 +182,14 @@ class _HomepageState extends State<Homepage> {
       ),
     );
   }
-  Future<bool> Function() _refreshNews(BuildContext buildContext){
-    return () async {
-      final response = await _http!.get(path, searchQuery, from, source);
-      if (response != null) {
-        articlesJson = response.data['articles'].where((article) => DateTime.now().subtract(const Duration(days: 1)).difference(DateTime.parse(article['publishedAt'])).inDays < 7).toList();
-        articles = articlesJson.map((articleJson) => Article.fromJson(articleJson)).toList();
-        _saveArticles();
-        return true;
-      }
-      return false;
-    };
-  }
-  Future<void> _saveArticles() async {
-    if(articles.length == savedArticles.length) return;
-    await _dbHelper.addArticles(articles);
-  }
-  Future<void> _loadSavedArticles(BuildContext buildContext) async {
-    await _showNotification();
-    final savedArticlesJson = await _dbHelper.getSavedArticles();
+  Future<void> loadSavedArticles() async {
+    final loadedArticles = await _newsModel.loadSavedArticles();
+    if(loadedArticles.isEmpty){
+      _newsModel.refreshNews(path, searchQuery, from, source);
+      loadSavedArticles();
+    }
     setState(() {
-      savedArticles = savedArticlesJson;
+      articles = loadedArticles;
     });
-    await _markArticlesAsOld();
-  }
-  Future<void> _markArticlesAsOld() async {
-    await _dbHelper.setStatusAsOld();
-  }
-  //Future<void> _clearSavedArticles() async {
-  //  await _dbHelper.deleteArticles();
-  //}
-  Future<void> _showToast(BuildContext context) async {
-    final scaffold = ScaffoldMessenger.of(context);
-    String message = "Total new articles: ${await _getNewsCount()}";
-    scaffold.showSnackBar(
-      SnackBar(
-        content: Text(message),
-      ),
-    );
-  }
-  Future<void> _showNotification() async {
-    int newArticlesCount = await _getNewsCount();
-    _notificationService.initialize();
-    if (newArticlesCount > 0){
-    String message = "You Have New Articles";
-    _notificationService.showNotification(
-      title:"Batalos News",
-      body: message,
-    );
-  }
-  }
-  Future<int> _getNewsCount() async {
-    final count = await _dbHelper.getNewsCount();
-    return count;
   }
 }
