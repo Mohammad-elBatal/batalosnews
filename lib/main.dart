@@ -10,38 +10,46 @@ import 'package:get_it/get_it.dart';
 import 'package:batalosnews/models/app_config.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:workmanager/workmanager.dart';
-import 'models/news_model.dart';
+import 'package:batalosnews/services/background_news_service.dart';
 
+@pragma('vm:entry-point')
 void callbackDispatcher() {
   Workmanager().executeTask((taskName, inputData) async {
+
     switch (taskName) {
       case 'simpleTask':
-        // Perform your background processing here
-        NewsModel().showNewArticlesNotification("everything", "", "${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}", "bbc-news");
+        await BackgroundNewsService().checkAndNotify();
         break;
-      // handle more tasks...
     }
-    return Future.value(true);
+
+    return true;
   });
 }
 
+
 void main() async { 
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   NotificationServices().initialize();
+  await FirebaseApi().initiNotifications();
   Workmanager().initialize(
     callbackDispatcher,
-    isInDebugMode: false,
+    isInDebugMode: true,
   );
-  Workmanager().registerPeriodicTask(
+  Workmanager().registerOneOffTask(
     "1",
     "simpleTask",
-    frequency: const Duration(minutes: 15),
     inputData: <String, dynamic>{
       'key': 'value',
     },
+    constraints: Constraints(
+      networkType: NetworkType.connected,
+    ),
   );
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await FirebaseApi().initiNotifications();
+  await FirebaseApi().initiNotifications(); 
   await loadConfig();
   registerHTTPService();
   runApp(const MyApp());
