@@ -11,36 +11,58 @@ import 'package:batalosnews/models/app_config.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:batalosnews/services/background_news_service.dart';
-
+Future<void> setupDependencies() async {
+  if (!GetIt.instance.isRegistered<AppConfig>()) {
+      String configContent = await rootBundle.loadString("assets/config/main.json");
+      Map configData = jsonDecode(configContent);
+      GetIt.instance.registerSingleton<AppConfig>(
+        AppConfig(
+          NEWS_BASE_API_URL: configData["NEWS_BASE_API_URL"], 
+          NEWS_API_KEY: configData["NEWS_API_KEY"]
+        ),
+      );
+  }
+  if (!GetIt.instance.isRegistered<HTTPService>()) {
+    GetIt.instance.registerSingleton<HTTPService>(HTTPService());
+  }
+}
 @pragma('vm:entry-point')
 void callbackDispatcher() {
   Workmanager().executeTask((taskName, inputData) async {
+    WidgetsFlutterBinding.ensureInitialized(); 
 
-    switch (taskName) {
-      case 'simpleTask':
-        await BackgroundNewsService().checkAndNotify();
-        break;
+    try {
+      await setupDependencies();
+      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+      if (taskName == 'simpleTask') {
+        final backgroundService = BackgroundNewsService();
+        await backgroundService.checkAndNotify();
+      }
+      if (taskName == 'simpleOneOffTask') {
+        Future.delayed(const Duration(seconds: 120));
+        final backgroundService = BackgroundNewsService();
+        await backgroundService.checkAndNotify();
+      }
+      return Future.value(true);
+    } catch (e) {
+      print("❌ Background Task Failed: $e");
+      return Future.value(false);
     }
-
-    return true;
   });
 }
-
-
 void main() async { 
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  NotificationServices().initialize();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await FirebaseApi().initiNotifications();
+  NotificationServices().initialize(isBackground: false);
+  await setupDependencies();
   Workmanager().initialize(
     callbackDispatcher,
     isInDebugMode: true,
   );
   Workmanager().registerOneOffTask(
-    "1",
-    "simpleTask",
+    "0",
+    "simpleOneOffTask",
     inputData: <String, dynamic>{
       'key': 'value',
     },
@@ -48,26 +70,17 @@ void main() async {
       networkType: NetworkType.connected,
     ),
   );
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await FirebaseApi().initiNotifications(); 
-  await loadConfig();
-  registerHTTPService();
+  Workmanager().registerPeriodicTask(
+    "1",
+    "simpleTask",
+      frequency: const Duration(minutes: 15),
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.update,
+    constraints: Constraints(
+      networkType: NetworkType.connected,
+    ),
+  );
   runApp(const MyApp());
 }
-
-Future<void> loadConfig() async {
-  String configContent =
-      await rootBundle.loadString("assets/config/main.json");
-  Map configData = jsonDecode(configContent);
-  GetIt.instance.registerSingleton<AppConfig>(
-    AppConfig(NEWS_BASE_API_URL: configData["NEWS_BASE_API_URL"], NEWS_API_KEY: configData["NEWS_API_KEY"]),
-  );
-}
-
-void registerHTTPService() {
-  GetIt.instance.registerSingleton<HTTPService>(HTTPService());
-}
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 

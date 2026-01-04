@@ -10,23 +10,23 @@ class NotificationServices {
   final notificationsPlugin = FlutterLocalNotificationsPlugin();
   bool _isInitialized = false;
 
-  Future<void> initialize() async {
-    if (_isInitialized) return;
+  Future<void> initialize({bool isBackground = false}) async {
+  if (_isInitialized && !isBackground) return;
+  if (!isBackground) {
     await notificationsPlugin
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.requestNotificationsPermission();
-
-    const initSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const initSettingsIOS = DarwinInitializationSettings();
-    
-    const initSettings = InitializationSettings(
-      android: initSettingsAndroid,
-      iOS: initSettingsIOS,
-    );
-
-    await notificationsPlugin.initialize(initSettings);
-    _isInitialized = true;
   }
+  const initSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
+  const initSettingsIOS = DarwinInitializationSettings();
+  
+  const initSettings = InitializationSettings(
+    android: initSettingsAndroid,
+    iOS: initSettingsIOS,
+  );
+  await notificationsPlugin.initialize(initSettings);
+  _isInitialized = true;
+}
 
   NotificationDetails _notificationDetails() {
     return const NotificationDetails(
