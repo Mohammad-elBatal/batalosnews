@@ -96,7 +96,6 @@ class DatabaseHelper {
     );
     return result.isNotEmpty;
   }
-
   Future<void> addArticlesFromJson(articles) async {
     List<Article> articleList = articles.map<Article>((json) => Article.fromJson(json)).toList();
     await addArticles(articleList);

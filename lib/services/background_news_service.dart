@@ -19,13 +19,13 @@ class BackgroundNewsService {
     final articles = response.data['articles'];
     await db.addArticlesFromJson(articles);
     final count = await db.getNewsCount();
-    //if (count > 0) {
+    if (count > 0) {
       final notificationService = NotificationServices();
       await notificationService.initialize(isBackground: true);
       await notificationService.showNotification(
         title: "Batalos News",
         body: "You have new articles",
       );
-    //}
+    }
   }
 }
