@@ -38,14 +38,14 @@ void callbackDispatcher() {
         final backgroundService = BackgroundNewsService();
         await backgroundService.checkAndNotify();
       }
-      if (taskName == 'simpleOneOffTask') {
-        Future.delayed(const Duration(seconds: 120));
-        final backgroundService = BackgroundNewsService();
-        await backgroundService.checkAndNotify();
-      }
+      // if (taskName == 'simpleOneOffTask') {
+      //   Future.delayed(const Duration(seconds: 120));
+      //   final backgroundService = BackgroundNewsService();
+      //   await backgroundService.checkAndNotify();
+      // }
       return Future.value(true);
     } catch (e) {
-      print("❌ Background Task Failed: $e");
+      //print("Background Task Failed: $e");
       return Future.value(false);
     }
   });
@@ -60,20 +60,20 @@ void main() async {
     callbackDispatcher,
     isInDebugMode: true,
   );
-  Workmanager().registerOneOffTask(
-    "0",
-    "simpleOneOffTask",
-    inputData: <String, dynamic>{
-      'key': 'value',
-    },
-    constraints: Constraints(
-      networkType: NetworkType.connected,
-    ),
-  );
+  // Workmanager().registerOneOffTask(
+  //   "0",
+  //   "simpleOneOffTask",
+  //   inputData: <String, dynamic>{
+  //     'key': 'value',
+  //   },
+  //   constraints: Constraints(
+  //     networkType: NetworkType.connected,
+  //   ),
+  // );
   Workmanager().registerPeriodicTask(
     "1",
     "simpleTask",
-      frequency: const Duration(minutes: 15),
+      frequency: const Duration(hours: 1),
       existingWorkPolicy: ExistingPeriodicWorkPolicy.update,
     constraints: Constraints(
       networkType: NetworkType.connected,
@@ -84,7 +84,6 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
