@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:batalosnews/classes/Article.dart';
+import 'package:batalosnews/pages/articlepage.dart' as article_page;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/news_model.dart';
@@ -125,19 +126,35 @@ class _HomepageState extends State<Homepage> {
     );
   }
   Widget _newsListItem(int index){
-    return Container(
-      margin: EdgeInsets.symmetric(vertical: _deviceHeight! * 0.008, horizontal: _deviceWidth! * 0.02),
-      decoration: BoxDecoration(
-        color: Color.fromRGBO(35, 47, 63, 1),
-        borderRadius: BorderRadius.circular(10.0),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => article_page.ArticlePage(
+              title: articles[index].title ?? 'No Title',
+              content: articles[index].content ?? 'No Content',
+              urlToImage: articles[index].urlToImage,
+              date: DateFormat.yMMMMd().add_jm().format(articles[index].publishedAt!),
+            ),
+          ),
+        );
+      },
+      child: Container(
+        margin: EdgeInsets.symmetric(vertical: _deviceHeight! * 0.008, horizontal: _deviceWidth! * 0.02),
+        decoration: BoxDecoration(
+          color: Color.fromRGBO(35, 47, 63, 1),
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        child: Column(
+        children: [
+          _newsListItemImage(index),
+          _newsListItemText(index),
+          _newsListItemPublishedAt(index)
+        ],
       ),
-      child: Column(
-      children: [
-        _newsListItemImage(index),
-        _newsListItemText(index),
-        _newsListItemPublishedAt(index)
-      ],
-    ));
+      ),
+    );
   }
   Widget _newsListItemImage(int index){
     return ClipRRect(
